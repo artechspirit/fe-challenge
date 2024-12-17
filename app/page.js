@@ -1,95 +1,82 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import React, { useState, useEffect } from "react";
+import { Box, Typography, Button } from "@mui/material";
+import NoteForm from "../components/NoteForm";
+import NoteList from "./notes/NoteList";
+import { nanoid } from "nanoid";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
+export default function HomePage() {
+  const router = useRouter();
+  const [notes, setNotes] = useState([]);
+  const [error, setError] = useState(null);
+
+  const addNote = (note) => {
+    const newNote = { id: nanoid(), ...note };
+    setNotes((prevNotes) => [newNote, ...prevNotes]);
+  };
+
+  const deleteNote = (id) => {
+    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/login");
+    }
+  }, [router]);
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        const response = await fetch("http://94.74.86.174:8080/api/checklist", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch cards");
+        }
+
+        const data = await response.json();
+        setNotes(data);
+      } catch (error) {
+        setError(error.message);
+      }
+    };
+
+    fetchCards();
+  }, []);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.js</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <Box mt={4} mb={6}>
+      <Box
+        display="flex"
+        flexDirection="row"
+        alignItems="center"
+        my={2}
+        justifyContent="space-between"
+      >
+        <Typography variant="h4" gutterBottom>
+          Google Keep Clone
+        </Typography>
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <Button variant="contained" color="primary" onClick={handleLogout}>
+          Log Out
+        </Button>
+      </Box>
+
+      <NoteForm onAddNote={addNote} />
+      <NoteList notes={notes} onDeleteNote={deleteNote} />
+    </Box>
   );
 }
