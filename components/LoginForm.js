@@ -11,25 +11,27 @@ const LoginForm = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch("http://94.74.86.174:8080/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
+    if (username && password) {
+      try {
+        const response = await fetch("http://94.74.86.174:8080/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        });
 
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        router.push("/");
-      } else {
-        setError(data.message || "Login failed");
+        const data = await response.json();
+        if (response.ok) {
+          localStorage.setItem("token", data.token);
+          router.push("/");
+        } else {
+          setError(data.message || "Login failed");
+        }
+      } catch (error) {
+        console.error(error);
+        setError("An error occurred");
       }
-    } catch (error) {
-      console.error(error);
-      setError("An error occurred");
     }
   };
 
